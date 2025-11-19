@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MVP Orders Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Кабинет тестировщика</h1>
+    <div class="nav-actions">
+      <div class="nav-auth-group" id="nav-auth-group">
+        <button type="button" id="nav-show-login">Войти</button>
+        <button type="button" id="nav-show-register">Зарегистрироваться</button>
+      </div>
+      <button type="button" id="nav-profile" class="nav-profile-btn hidden">
+        <span class="nav-profile-label">Профиль</span>
+        <span class="nav-profile-status" id="auth-status">Не авторизован</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section id="registration-section">
+      <h2>Регистрация</h2>
+      <form id="registration-form">
+        <label>
+          Телефон:
+          <input type="tel" name="phone_number" placeholder="+7..." required>
+        </label>
+        <label>
+          Имя:
+          <input type="text" name="first_name">
+        </label>
+        <label>
+          Фамилия:
+          <input type="text" name="last_name">
+        </label>
+        <label>
+          Email:
+          <input type="email" name="email">
+        </label>
+        <label>
+          Пароль:
+          <input type="password" name="password" required minlength="8">
+        </label>
+        <button type="submit">Зарегистрироваться</button>
+      </form>
+    </section>
+
+    <section id="login-section" class="hidden">
+      <h2>Вход</h2>
+      <form id="login-form">
+        <label>
+          Телефон:
+          <input type="tel" name="phone_number" placeholder="+7..." required>
+        </label>
+        <label>
+          Пароль:
+          <input type="password" name="password" required>
+        </label>
+        <button type="submit">Войти</button>
+      </form>
+    </section>
+
+    <section id="profile-section" class="hidden">
+      <div class="profile-header">
+        <div class="progress-indicator">
+          <div class="progress-circle" id="progress-circle">
+            <span id="current-step">1</span>/6
+          </div>
+          <h2 id="step-title">Базовая информация</h2>
+        </div>
+      </div>
+      
+      <form id="profile-form" class="multi-step-form" novalidate>
+        <!-- Шаг 1: Базовая информация -->
+        <div class="form-step" data-step="1">
+          <label>ФИО или псевдоним блогера *:
+            <input type="text" name="full_name" required>
+          </label>
+          <label>Есть ли у вас самозанятость? *:
+            <select name="has_self_employment" required>
+              <option value="">Выберите...</option>
+              <option value="true">Да</option>
+              <option value="false">Нет</option>
+            </select>
+          </label>
+          <label>Готовы ли вы оформить самозанятость? *:
+            <select name="ready_for_self_employment" required>
+              <option value="">Выберите...</option>
+              <option value="yes">Да</option>
+              <option value="no">Нет</option>
+              <option value="maybe">Возможно</option>
+            </select>
+          </label>
+          <label>Ссылка на основной блог *:
+            <input type="url" name="main_blog_link" placeholder="Instagram/TikTok/YouTube/Telegram и др." required>
+          </label>
+          <label>Ссылки на все активные соцсети *:
+            <div id="social-links-container">
+              <input type="url" name="social_links[]" placeholder="https://..." required>
+            </div>
+            <button type="button" class="add-more-btn" onclick="addSocialLink()">+ Добавить еще</button>
+          </label>
+          <label>Страна *:
+            <input type="text" name="country" required>
+          </label>
+          <label>Город проживания *:
+            <input type="text" name="city" required>
+          </label>
+          <label>Возраст *:
+            <input type="number" name="age" min="1" max="120" required>
+          </label>
+          <label>Пол *:
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="gender" value="M" required>
+                <span>М</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="gender" value="F" required>
+                <span>Ж</span>
+              </label>
+            </div>
+          </label>
+          <label>Город(а)/регионы охвата (где основная ЦА) *:
+            <input type="text" name="coverage_regions" required>
+          </label>
+        </div>
+
+        <!-- Шаг 2: Контент и платформа -->
+        <div class="form-step hidden" data-step="2">
+          <label>Платформы, на которых ведёшь блог *:
+            <div id="platforms-container">
+              <input type="text" name="platforms[]" placeholder="Например: Instagram" required>
+            </div>
+            <button type="button" class="add-more-btn" onclick="addPlatform()">+ Добавить еще</button>
+            <small>(можно выбрать несколько)</small>
+          </label>
+          <label>Тематика блога *:
+            <div id="blog-topics-container">
+              <input type="text" name="blog_topics[]" placeholder="Например: Косметика" required>
+            </div>
+            <button type="button" class="add-more-btn" onclick="addBlogTopic()">+ Добавить еще</button>
+            <small>(можно выбрать несколько)</small>
+          </label>
+          <label>Краткое описание блога *:
+            <textarea name="blog_description" required></textarea>
+          </label>
+          <label>Как давно ведёшь блог? *:
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="blog_experience" value="<6months" required>
+                <span>До 6 месяцев</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="blog_experience" value="6months-1year" required>
+                <span>6 мес - 1 год</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="blog_experience" value="1-2years" required>
+                <span>1-2 года</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="blog_experience" value=">2years" required>
+                <span>Более 2 лет</span>
+              </label>
+            </div>
+          </label>
+          <label>Частота публикаций *:
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="publication_frequency" value="daily" required>
+                <span>Ежедневно</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="publication_frequency" value="few_times_week" required>
+                <span>Несколько раз в неделю</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="publication_frequency" value="once_week" required>
+                <span>Раз в неделю</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="publication_frequency" value="less_often" required>
+                <span>Реже</span>
+              </label>
+            </div>
+          </label>
+        </div>
+
+        <!-- Шаг 3: Аудитория -->
+        <div class="form-step hidden" data-step="3">
+          <label>Общее количество подписчиков по платформам *:
+            <div id="subscribers-container">
+              <input type="text" name="subscribers_by_platform[]" placeholder="Платформа: количество" required>
+            </div>
+            <button type="button" class="add-more-btn" onclick="addSubscriber()">+ Добавить еще</button>
+            <small>(указать по каждой)</small>
+          </label>
+          <label>Средний охват постов/сторис/видео *:
+            <div id="reach-container">
+              <input type="text" name="average_reach[]" placeholder="Канал: охват" required>
+            </div>
+            <button type="button" class="add-more-btn" onclick="addReach()">+ Добавить еще</button>
+            <small>(по каждому каналу)</small>
+          </label>
+          <label>Пол и возраст аудитории:
+            <textarea name="audience_gender_age" placeholder="Если есть статистика"></textarea>
+            <small>(если есть статистика)</small>
+          </label>
+          <label>Основной регион/страна аудитории:
+            <input type="text" name="audience_region">
+          </label>
+          <label>Уровень вовлечённости *:
+            <input type="text" name="engagement_level" placeholder="% или просто: низкий / средний / высокий" required>
+            <small>(если знаешь, % или просто: низкий / средний / высокий)</small>
+          </label>
+        </div>
+
+        <!-- Шаг 4: Опыт и сотрудничество -->
+        <div class="form-step hidden" data-step="4">
+          <label class="checkbox">
+            <input type="checkbox" name="has_collaborations">
+            <span>Были ли у тебя уже рекламные коллаборации?</span>
+          </label>
+          <small>(по умолчанию - нет)</small>
+          <label>Примеры успешных коллабораций:
+            <div id="collaborations-container">
+              <input type="text" name="collaboration_examples[]" placeholder="Кейсы, ссылки, бренды">
+            </div>
+            <button type="button" class="add-more-btn" onclick="addCollaboration()">+ Добавить еще</button>
+            <small>(кейсы, ссылки, бренды)</small>
+          </label>
+          <label>Готов(а) делиться результатами *:
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="ready_to_share_results" value="yes" required>
+                <span>Да</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="ready_to_share_results" value="no" required>
+                <span>Нет</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="ready_to_share_results" value="by_agreement" required>
+                <span>По договорённости</span>
+              </label>
+            </div>
+            <small>(скриншоты охватов, статистики)</small>
+          </label>
+          <label>Готов(а) делать рекламу по договору/купленным сделкам? *:
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="ready_for_paid_ads" value="yes_no_problem" required>
+                <span>Да, без проблем</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="ready_for_paid_ads" value="depends_on_conditions" required>
+                <span>Зависит от условий</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="ready_for_paid_ads" value="no" required>
+                <span>Нет</span>
+              </label>
+            </div>
+          </label>
+        </div>
+
+        <!-- Шаг 5: Формат сотрудничества -->
+        <div class="form-step hidden" data-step="5">
+          <label>Какие форматы сотрудничества тебе интересны? *:
+            <div id="formats-container">
+              <input type="text" name="collaboration_formats[]" required>
+            </div>
+            <button type="button" class="add-more-btn" onclick="addFormat()">+ Добавить еще</button>
+            <small>(Можно выбрать несколько)</small>
+          </label>
+          <label>Стоимость рекламы *:
+            <div id="pricing-container">
+              <input type="text" name="ad_pricing[]" placeholder="Соцсеть, тип - стоимость" required>
+            </div>
+            <button type="button" class="add-more-btn" onclick="addPricing()">+ Добавить еще</button>
+            <small>(Укажи прайс за каждый формат. Пример: Соцсеть, тип - стоимость)</small>
+          </label>
+          <label>Готов(а) на бартерное сотрудничество? *:
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="ready_for_barter" value="yes" required>
+                <span>Да</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="ready_for_barter" value="no" required>
+                <span>Нет</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="ready_for_barter" value="depends_on_product" required>
+                <span>Зависит от товара/условий</span>
+              </label>
+            </div>
+          </label>
+          <label>Какие категории товаров тебе интересны для бартерных? *:
+            <div id="barter-categories-container">
+              <input type="text" name="barter_categories[]" required>
+            </div>
+            <button type="button" class="add-more-btn" onclick="addBarterCategory()">+ Добавить еще</button>
+            <small>(Можно выбрать несколько)</small>
+          </label>
+        </div>
+
+        <!-- Шаг 6: Дополнительно -->
+        <div class="form-step hidden" data-step="6">
+          <label>Готов(а) участвовать в проектах/промо-акциях/челленджах от брендов? *:
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="ready_for_brand_projects" value="yes" required>
+                <span>Да</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="ready_for_brand_projects" value="maybe_depends" required>
+                <span>Возможно, смотря на условия</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="ready_for_brand_projects" value="no" required>
+                <span>Нет</span>
+              </label>
+            </div>
+          </label>
+          <label>Какой товар не будешь рекламировать точно?:
+            <textarea name="products_wont_advertise"></textarea>
+          </label>
+          <label>Ты сам(а) ведёшь блог или есть команда/менеджер? *:
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="blog_management" value="myself" required>
+                <span>Сам(а)</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="blog_management" value="assistant_manager" required>
+                <span>Есть помощник/менеджер</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="blog_management" value="agency" required>
+                <span>Агентство</span>
+              </label>
+            </div>
+          </label>
+          <label>Есть ли у тебя медиа-кит? *:
+            <select name="has_media_kit" required onchange="toggleMediaKitLink(this)">
+              <option value="">Выберите...</option>
+              <option value="true">Да</option>
+              <option value="false">Нет</option>
+            </select>
+          </label>
+          <label id="media-kit-link-label" class="hidden">Ссылка на медиа-кит:
+            <input type="url" name="media_kit_link" placeholder="https://...">
+            <small>(Ссылка)</small>
+          </label>
+          <label>Согласен(на) ли ты участвовать в закрытом сообществе блогеров для коллабораций и предложений от брендов? *:
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="ready_for_blogger_community" value="yes" required>
+                <span>Да</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="ready_for_blogger_community" value="maybe" required>
+                <span>Возможно</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="ready_for_blogger_community" value="no" required>
+                <span>Нет</span>
+              </label>
+            </div>
+          </label>
+          <label>Дополнительная информация, пожелания, ссылки на видео/о...:
+            <textarea name="additional_info"></textarea>
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" name="consent_privacy" required>
+            <span>Нажимая кнопку «Отправить», я даю свое согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на условиях и для целей, определенных в Согласии на обработку персональных данных *</span>
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" name="consent_marketing_email">
+            <span>Я согласен(на) получать рекламные и информационные материалы от ООО "СОЛЮШЕН" на указанный email.</span>
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" name="consent_marketing_calls">
+            <span>Я согласен(на) на получение информационных и рекламных звонков от ООО «СОЛЮШЕН»</span>
+          </label>
+        </div>
+
+        <div class="form-navigation">
+          <button type="button" id="prev-step-btn" class="btn-secondary hidden">Назад</button>
+          <button type="button" id="next-step-btn" class="btn-primary">Далее</button>
+          <button type="submit" id="submit-btn" class="btn-primary hidden">Отправить</button>
+        </div>
+      </form>
+      
+      <div class="profile-meta">
+        <span id="profile-status"></span>
+        <button id="participation-toggle" data-active="false">Участвовать в заказах</button>
+      </div>
+    </section>
+
+    <section id="orders-section" class="hidden">
+      <h2>Заказы для подтверждения</h2>
+      <ul id="orders-list"></ul>
+    </section>
+
+    <section id="purchases-section" class="hidden">
+      <h2>Мои заказы</h2>
+      <ul id="purchases-list"></ul>
+    </section>
+  </main>
+
+  <div id="toast" class="hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+
