@@ -846,26 +846,44 @@ async function openTestReportForm(purchaseId) {
   
   if (!purchaseId) {
     console.error('No purchaseId provided');
+    showToast('Ошибка: не указан ID заказа');
     return;
   }
   
   // Преобразуем в число, если это строка
   purchaseId = parseInt(purchaseId, 10);
+  if (isNaN(purchaseId)) {
+    console.error('Invalid purchaseId:', purchaseId);
+    showToast('Ошибка: неверный ID заказа');
+    return;
+  }
   
+  // Получаем элементы формы (на случай, если они еще не определены)
   const purchaseIdInput = document.getElementById('report-purchase-id');
+  const section = document.getElementById('test-report-section');
+  const form = document.getElementById('test-report-form');
+  
+  if (!section) {
+    console.error('testReportSection element not found!');
+    showToast('Ошибка: форма отчета не найдена');
+    return;
+  }
+  
+  if (!form) {
+    console.error('testReportForm element not found!');
+    showToast('Ошибка: форма не найдена');
+    return;
+  }
+  
+  // Устанавливаем ID заказа
   if (purchaseIdInput) {
     purchaseIdInput.value = purchaseId;
   }
   
   // Сначала показываем форму
-  if (testReportSection) {
-    testReportSection.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-    console.log('Test report section shown');
-  } else {
-    console.error('testReportSection element not found!');
-    return;
-  }
+  section.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  console.log('Test report section shown');
   
   // Загружаем существующий отчет, если есть
   try {
@@ -882,6 +900,24 @@ async function openTestReportForm(purchaseId) {
       } else {
         // Если purchase еще не загружен, заполняем только из профиля
         fillTestReportFormFromProfile();
+        // Попробуем загрузить purchase из API
+        try {
+          const purchases = await apiRequest('/orders/purchases/');
+          const foundPurchase = purchases.find(p => p.id === purchaseId);
+          if (foundPurchase && form.item_name) {
+            form.item_name.value = foundPurchase.article || '';
+          }
+        } catch (e) {
+          console.warn('Could not load purchase:', e);
+        }
+      }
+    } else {
+      // Если профиль не загружен, загружаем его
+      try {
+        await loadProfile();
+        fillTestReportFormFromProfile();
+      } catch (e) {
+        console.error('Could not load profile:', e);
       }
     }
   }
@@ -1209,23 +1245,25 @@ ordersList.addEventListener('click', async (event) => {
     // Если заказ принят, сразу открываем форму отчета
     if (action === 'approve' && response && response.purchase_id) {
       console.log('Opening report form for purchase_id:', response.purchase_id);
-      // Открываем форму сразу
-      await openTestReportForm(response.purchase_id);
-      // Затем обновляем списки (это обновит purchase в state, и форма может обновиться)
-      await Promise.all([loadOrders(), loadPurchases()]);
       
-      // Обновляем item_name в форме, если purchase загрузился
-      const purchase = state.purchases.find(p => p.id === response.purchase_id);
-      if (purchase && testReportForm && testReportForm.item_name) {
-        if (!testReportForm.item_name.value) {
-          testReportForm.item_name.value = purchase.article || '';
-        }
+      // Обновляем списки в фоне (не ждем)
+      Promise.all([loadOrders(), loadPurchases()]).catch(err => {
+        console.warn('Error loading orders/purchases:', err);
+      });
+      
+      // Открываем форму сразу (не ждем обновления списков)
+      try {
+        await openTestReportForm(response.purchase_id);
+      } catch (err) {
+        console.error('Error opening report form:', err);
+        showToast('Ошибка при открытии формы отчета: ' + err.message);
       }
     } else {
       // Для отклонения просто обновляем списки
       await Promise.all([loadOrders(), loadPurchases()]);
       if (action === 'approve') {
         console.warn('No purchase_id in response:', response);
+        showToast('Ошибка: не получен ID заказа');
       }
     }
   } catch (error) {
@@ -1282,6 +1320,88 @@ if (testReportSection) {
   testReportSection.addEventListener('click', (e) => {
     if (e.target === testReportSection) {
       closeTestReportForm();
+    }
+  });
+}
+
+// Обработчик отправки формы отчета
+if (testReportForm) {
+  testReportForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    
+    const purchaseId = document.getElementById('report-purchase-id')?.value;
+    if (!purchaseId) {
+      showToast('Ошибка: не указан ID заказа');
+      return;
+    }
+    
+    const submitBtn = testReportForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn ? submitBtn.textContent : 'Сохранить отчёт';
+    
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Сохранение...';
+    }
+    
+    try {
+      const formData = new FormData(testReportForm);
+      
+      // Собираем данные формы
+      const payload = {
+        full_name: formData.get('full_name') || '',
+        contact: formData.get('contact') || '',
+        item_name: formData.get('item_name') || '',
+        category: formData.get('category') || '',
+        received_at: formData.get('received_at') || '',
+        completed_at: formData.get('completed_at') || '',
+        report_type: formData.get('report_type') || '',
+        proof_links: formData.getAll('proof_links[]').filter(v => v),
+        score_overall: formData.get('score_overall') ? parseInt(formData.get('score_overall'), 10) : null,
+        score_expectation_fit: formData.get('score_expectation_fit') ? parseInt(formData.get('score_expectation_fit'), 10) : null,
+        score_quality_effect: formData.get('score_quality_effect') ? parseInt(formData.get('score_quality_effect'), 10) : null,
+        score_usability: formData.get('score_usability') ? parseInt(formData.get('score_usability'), 10) : null,
+        score_value_for_money: formData.get('score_value_for_money') ? parseInt(formData.get('score_value_for_money'), 10) : null,
+        score_recommend: formData.get('score_recommend') ? parseInt(formData.get('score_recommend'), 10) : null,
+        likes: formData.get('likes') || '',
+        improvements: formData.get('improvements') || '',
+        review_text: formData.get('review_text') || '',
+        emotions_3_words: formData.get('emotions_3_words') || '',
+        issues_occured: formData.get('issues_occured') === 'on',
+        issues_note: formData.get('issues_note') || '',
+        would_buy: formData.get('would_buy') || '',
+        ready_for_next: formData.get('ready_for_next') === 'on',
+        consent_truthful: formData.get('consent_truthful') === 'on',
+        consent_use_materials: formData.get('consent_use_materials') === 'on',
+      };
+      
+      // Отправляем отчет (PATCH для обновления, если уже существует)
+      const report = await apiRequest(`/orders/purchases/${purchaseId}/report/`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+      
+      showToast('Отчёт успешно сохранён! ✅');
+      await loadPurchases(); // Обновляем список заказов
+      
+    } catch (error) {
+      console.error('Error saving report:', error);
+      let errorMessage = 'Ошибка при сохранении отчёта';
+      try {
+        const errorData = JSON.parse(error.message);
+        if (errorData && errorData.detail) {
+          errorMessage = errorData.detail;
+        }
+      } catch (e) {
+        if (error.message) {
+          errorMessage = error.message;
+        }
+      }
+      showToast(errorMessage);
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
     }
   });
 }
