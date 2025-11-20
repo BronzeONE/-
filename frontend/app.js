@@ -25,6 +25,11 @@ const purchasesList = document.getElementById('purchases-list');
 const toastEl = document.getElementById('toast');
 const registrationForm = document.getElementById('registration-form');
 const loginForm = document.getElementById('login-form');
+const testReportSection = document.getElementById('test-report-section');
+const testReportForm = document.getElementById('test-report-form');
+const closeReportBtn = document.getElementById('close-report-btn');
+const proofFilesInput = document.getElementById('proof-files-input');
+const reviewTextArea = testReportForm?.querySelector('textarea[name="review_text"]');
 
 let currentAuthView = 'register';
 
@@ -662,14 +667,29 @@ function renderPurchases() {
   state.purchases.forEach((purchase) => {
     const li = document.createElement('li');
     li.classList.add('purchase-card');
+    const hasReport = purchase.has_report || false;
     li.innerHTML = `
       <div><strong>Артикул:</strong> ${purchase.article}</div>
       <div><strong>ID:</strong> ${purchase.external_id || '—'}</div>
       <div><strong>ПВЗ:</strong> ${purchase.pickup_point || '—'}</div>
       <div><strong>Статус:</strong> ${purchase.status}</div>
+      <div><strong>Отчёт:</strong> ${hasReport ? '✅ Заполнен' : '❌ Не заполнен'}</div>
       <pre>${JSON.stringify(purchase.metadata || {}, null, 2)}</pre>
+      <div class="purchase-actions">
+        <button type="button" class="btn-primary" data-action="fill-report" data-id="${purchase.id}">
+          ${hasReport ? 'Редактировать отчёт' : 'Заполнить отчёт'}
+        </button>
+      </div>
     `;
     purchasesList.appendChild(li);
+  });
+  
+  // Добавляем обработчики для кнопок отчетов
+  purchasesList.querySelectorAll('[data-action="fill-report"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const purchaseId = parseInt(btn.dataset.id);
+      await openTestReportForm(purchaseId);
+    });
   });
 }
 
@@ -805,6 +825,196 @@ window.addFormat = addFormat;
 window.addPricing = addPricing;
 window.addBarterCategory = addBarterCategory;
 window.toggleMediaKitLink = toggleMediaKitLink;
+window.addProofLink = addProofLink;
+
+function addProofLink() {
+  const container = document.getElementById('proof-links-container');
+  if (container) {
+    const input = document.createElement('input');
+    input.type = 'url';
+    input.name = 'proof_links[]';
+    input.placeholder = 'https://...';
+    container.appendChild(input);
+  }
+}
+
+// Test Report Functions
+let selectedFiles = [];
+
+async function openTestReportForm(purchaseId) {
+  console.log('openTestReportForm called with purchaseId:', purchaseId);
+  
+  if (!purchaseId) {
+    console.error('No purchaseId provided');
+    return;
+  }
+  
+  // Преобразуем в число, если это строка
+  purchaseId = parseInt(purchaseId, 10);
+  
+  const purchaseIdInput = document.getElementById('report-purchase-id');
+  if (purchaseIdInput) {
+    purchaseIdInput.value = purchaseId;
+  }
+  
+  // Сначала показываем форму
+  if (testReportSection) {
+    testReportSection.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    console.log('Test report section shown');
+  } else {
+    console.error('testReportSection element not found!');
+    return;
+  }
+  
+  // Загружаем существующий отчет, если есть
+  try {
+    const report = await apiRequest(`/orders/purchases/${purchaseId}/report/`);
+    console.log('Report loaded:', report);
+    fillTestReportForm(report);
+  } catch (error) {
+    console.log('No existing report, filling from profile/purchase:', error);
+    // Отчета нет, заполняем форму данными из профиля
+    if (state.profile) {
+      const purchase = state.purchases.find(p => p.id === purchaseId);
+      if (purchase) {
+        fillTestReportFormFromPurchase(purchase);
+      } else {
+        // Если purchase еще не загружен, заполняем только из профиля
+        fillTestReportFormFromProfile();
+      }
+    }
+  }
+}
+
+function fillTestReportForm(report) {
+  if (!report || !testReportForm) return;
+  
+  testReportForm.full_name.value = report.full_name || '';
+  testReportForm.contact.value = report.contact || '';
+  testReportForm.item_name.value = report.item_name || '';
+  testReportForm.category.value = report.category || '';
+  testReportForm.received_at.value = report.received_at || '';
+  testReportForm.completed_at.value = report.completed_at || '';
+  testReportForm.report_type.value = report.report_type || '';
+  
+  // Proof links
+  const proofLinksContainer = document.getElementById('proof-links-container');
+  if (proofLinksContainer && report.proof_links && Array.isArray(report.proof_links)) {
+    proofLinksContainer.innerHTML = '';
+    report.proof_links.forEach(link => {
+      const input = document.createElement('input');
+      input.type = 'url';
+      input.name = 'proof_links[]';
+      input.value = link;
+      proofLinksContainer.appendChild(input);
+    });
+  }
+  
+  testReportForm.score_overall.value = report.score_overall || '';
+  testReportForm.score_expectation_fit.value = report.score_expectation_fit || '';
+  testReportForm.score_quality_effect.value = report.score_quality_effect || '';
+  testReportForm.score_usability.value = report.score_usability || '';
+  testReportForm.score_value_for_money.value = report.score_value_for_money || '';
+  testReportForm.score_recommend.value = report.score_recommend || '';
+  
+  testReportForm.likes.value = report.likes || '';
+  testReportForm.improvements.value = report.improvements || '';
+  testReportForm.review_text.value = report.review_text || '';
+  testReportForm.emotions_3_words.value = report.emotions_3_words || '';
+  
+  testReportForm.issues_occured.checked = report.issues_occured || false;
+  testReportForm.issues_note.value = report.issues_note || '';
+  toggleIssuesNote();
+  
+  testReportForm.would_buy.value = report.would_buy || '';
+  testReportForm.ready_for_next.checked = report.ready_for_next || false;
+  testReportForm.consent_truthful.checked = report.consent_truthful || false;
+  testReportForm.consent_use_materials.checked = report.consent_use_materials || false;
+  
+  updateReviewTextCount();
+}
+
+function fillTestReportFormFromPurchase(purchase) {
+  if (!testReportForm || !state.profile) return;
+  
+  testReportForm.full_name.value = state.profile.full_name || '';
+  testReportForm.contact.value = state.profile.contact || state.user?.phone_number || '';
+  testReportForm.item_name.value = purchase.article || '';
+}
+
+function fillTestReportFormFromProfile() {
+  if (!testReportForm || !state.profile) return;
+  
+  testReportForm.full_name.value = state.profile.full_name || '';
+  testReportForm.contact.value = state.profile.contact || state.user?.phone_number || '';
+  // item_name будет заполнен позже, когда purchase загрузится
+}
+
+function toggleIssuesNote() {
+  const issuesOccured = testReportForm?.issues_occured;
+  const issuesNoteLabel = document.getElementById('issues-note-label');
+  if (issuesOccured && issuesNoteLabel) {
+    if (issuesOccured.checked) {
+      issuesNoteLabel.classList.remove('hidden');
+    } else {
+      issuesNoteLabel.classList.add('hidden');
+    }
+  }
+}
+
+function updateReviewTextCount() {
+  if (reviewTextArea) {
+    const count = reviewTextArea.value.length;
+    const countEl = document.getElementById('review-text-count');
+    if (countEl) {
+      countEl.textContent = `${count}/1000`;
+      if (count > 1000) {
+        countEl.style.color = '#f04444';
+      } else {
+        countEl.style.color = '#666';
+      }
+    }
+  }
+}
+
+function closeTestReportForm() {
+  if (testReportSection) {
+    testReportSection.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+  if (testReportForm) {
+    testReportForm.reset();
+    selectedFiles = [];
+    updateProofFilesList();
+  }
+}
+
+function updateProofFilesList() {
+  const filesList = document.getElementById('proof-files-list');
+  if (!filesList) return;
+  
+  filesList.innerHTML = '';
+  selectedFiles.forEach((file, index) => {
+    const div = document.createElement('div');
+    div.className = 'file-item';
+    div.innerHTML = `
+      <span>${file.name}</span>
+      <button type="button" onclick="removeFile(${index})">Удалить</button>
+    `;
+    filesList.appendChild(div);
+  });
+}
+
+function removeFile(index) {
+  selectedFiles.splice(index, 1);
+  updateProofFilesList();
+  if (proofFilesInput) {
+    proofFilesInput.value = '';
+  }
+}
+
+window.removeFile = removeFile;
 
 // Navigation buttons
 document.getElementById('prev-step-btn')?.addEventListener('click', () => {
@@ -980,21 +1190,64 @@ ordersList.addEventListener('click', async (event) => {
   }
 
   const payload = { action };
+  // Для approve не запрашиваем external_id и pickup_point - они будут взяты из профиля или заказа на бэкенде
   if (action === 'approve') {
-    payload.external_id = prompt('Введите ID заказа (можно оставить пустым)', '') || '';
-    payload.pickup_point = prompt('Введите ПВЗ (по умолчанию из профиля)', '') || '';
+    payload.external_id = '';
+    payload.pickup_point = '';
   }
 
   try {
-    await apiRequest(`/orders/creating/${id}/decision/`, {
+    const response = await apiRequest(`/orders/creating/${id}/decision/`, {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-    showToast(action === 'approve' ? 'Заказ принят.' : 'Заказ отклонён.');
-    await Promise.all([loadOrders(), loadPurchases()]);
+    
+    console.log('Response from decision:', response);
+    
+    showToast(action === 'approve' ? 'Заказ принят. Заполните отчёт о тестировании.' : 'Заказ отклонён.');
+    
+    // Если заказ принят, сразу открываем форму отчета
+    if (action === 'approve' && response && response.purchase_id) {
+      console.log('Opening report form for purchase_id:', response.purchase_id);
+      // Открываем форму сразу
+      await openTestReportForm(response.purchase_id);
+      // Затем обновляем списки (это обновит purchase в state, и форма может обновиться)
+      await Promise.all([loadOrders(), loadPurchases()]);
+      
+      // Обновляем item_name в форме, если purchase загрузился
+      const purchase = state.purchases.find(p => p.id === response.purchase_id);
+      if (purchase && testReportForm && testReportForm.item_name) {
+        if (!testReportForm.item_name.value) {
+          testReportForm.item_name.value = purchase.article || '';
+        }
+      }
+    } else {
+      // Для отклонения просто обновляем списки
+      await Promise.all([loadOrders(), loadPurchases()]);
+      if (action === 'approve') {
+        console.warn('No purchase_id in response:', response);
+      }
+    }
   } catch (error) {
-    console.error(error);
-    showToast(`Ошибка обработки заказа: ${error.message}`);
+    console.error('Error processing order:', error);
+    let errorMessage = error.message;
+    
+    // Парсим детали ошибки, если это JSON
+    try {
+      const errorData = JSON.parse(error.message);
+      if (errorData && errorData.detail) {
+        errorMessage = errorData.detail;
+      }
+    } catch (e) {
+      // Не JSON, используем как есть
+    }
+    
+    showToast(`Ошибка: ${errorMessage}`);
+    
+    // Если ошибка связана с участием или профилем, перезагружаем профиль
+    if (errorMessage.includes('participation') || errorMessage.includes('profile')) {
+      await loadProfile();
+    }
   }
 });
 
@@ -1016,6 +1269,22 @@ navShowRegister?.addEventListener('click', () => {
   registrationSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   showToast('Открыта форма регистрации');
 });
+
+// Обработчик закрытия формы отчета
+if (closeReportBtn) {
+  closeReportBtn.addEventListener('click', () => {
+    closeTestReportForm();
+  });
+}
+
+// Закрытие формы отчета при клике вне формы
+if (testReportSection) {
+  testReportSection.addEventListener('click', (e) => {
+    if (e.target === testReportSection) {
+      closeTestReportForm();
+    }
+  });
+}
 
 // Initialize multi-step form
 updateStepDisplay();

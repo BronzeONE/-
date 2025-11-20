@@ -88,3 +88,94 @@ class Purchase(models.Model):
 
     def __str__(self):
         return f'Заказ #{self.id or "new"} - {self.article}'
+
+
+class TestReport(models.Model):
+    """Универсальная форма отчёта о тестировании."""
+    
+    CATEGORY_CHOICES = (
+        ('cosmetics', 'Косметика'),
+        ('clothing', 'Одежда'),
+        ('tech', 'Техника'),
+        ('home', 'Дом'),
+        ('other', 'Другое'),
+    )
+    
+    REPORT_TYPE_CHOICES = (
+        ('publication', 'Публикация'),
+        ('marketplace_review', 'Отзыв на МП'),
+        ('photo_report', 'Фото-отчёт'),
+        ('video_report', 'Видео-отчёт'),
+        ('other', 'Другое'),
+    )
+    
+    WOULD_BUY_CHOICES = (
+        ('yes', 'Да'),
+        ('no', 'Нет'),
+        ('depends_on_price', 'Зависит от цены'),
+    )
+    
+    purchase = models.OneToOneField(
+        Purchase,
+        on_delete=models.CASCADE,
+        related_name='test_report',
+        verbose_name='Заказ'
+    )
+    
+    # 1) Идентификация задания
+    full_name = models.CharField(max_length=255, verbose_name='ФИО')
+    contact = models.CharField(max_length=255, verbose_name='Телефон/Telegram')
+    item_name = models.CharField(max_length=255, verbose_name='Название товара/кейса')
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, verbose_name='Категория')
+    received_at = models.DateField(verbose_name='Дата получения')
+    completed_at = models.DateField(verbose_name='Дата завершения')
+    
+    # 2) Подтверждение выполнения
+    report_type = models.CharField(
+        max_length=50,
+        choices=REPORT_TYPE_CHOICES,
+        blank=True,
+        verbose_name='Тип отчёта'
+    )
+    proof_links = models.JSONField(default=list, blank=True, verbose_name='Ссылки на материалы')
+    proof_files = models.JSONField(default=list, blank=True, verbose_name='Загруженные файлы (пути)')
+    
+    # 3) Количественные оценки
+    score_overall = models.IntegerField(null=True, blank=True, verbose_name='Общее впечатление (1-5)')
+    score_expectation_fit = models.IntegerField(null=True, blank=True, verbose_name='Соответствие ожиданиям (1-5)')
+    score_quality_effect = models.IntegerField(null=True, blank=True, verbose_name='Качество/эффективность (1-5)')
+    score_usability = models.IntegerField(null=True, blank=True, verbose_name='Удобство использования (1-5)')
+    score_value_for_money = models.IntegerField(null=True, blank=True, verbose_name='Соотношение цена/качество (1-5)')
+    score_recommend = models.IntegerField(null=True, blank=True, verbose_name='Готовность рекомендовать (0-10)')
+    
+    # 4) Качественная обратная связь
+    likes = models.TextField(blank=True, verbose_name='Что понравилось?')
+    improvements = models.TextField(blank=True, verbose_name='Что улучшить?')
+    review_text = models.TextField(max_length=1000, blank=True, verbose_name='Комментарий/отзыв')
+    emotions_3_words = models.CharField(max_length=255, blank=True, verbose_name='3 слова-эмоции о товаре')
+    
+    # 5) Условия и итоги
+    issues_occured = models.BooleanField(default=False, verbose_name='Опыт проблем/дефектов')
+    issues_note = models.TextField(blank=True, verbose_name='Описание проблем')
+    would_buy = models.CharField(
+        max_length=50,
+        choices=WOULD_BUY_CHOICES,
+        blank=True,
+        verbose_name='Купили бы сами?'
+    )
+    ready_for_next = models.BooleanField(default=False, verbose_name='Готовность к повторному тесту')
+    
+    # Согласия
+    consent_truthful = models.BooleanField(default=False, verbose_name='Подтверждаю достоверность данных')
+    consent_use_materials = models.BooleanField(default=False, verbose_name='Разрешаю использовать материалы')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ('-created_at',)
+        verbose_name = 'Отчёт о тестировании'
+        verbose_name_plural = 'Отчёты о тестировании'
+    
+    def __str__(self):
+        return f'Отчёт по заказу #{self.purchase_id} - {self.item_name}'

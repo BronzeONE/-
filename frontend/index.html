@@ -3,65 +3,76 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MVP Orders Dashboard</title>
+  <title>Кабинет тестировщика</title>
+  <!-- Flowbite CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <header>
-    <h1>Кабинет тестировщика</h1>
-    <div class="nav-actions">
-      <div class="nav-auth-group" id="nav-auth-group">
-        <button type="button" id="nav-show-login">Войти</button>
-        <button type="button" id="nav-show-register">Зарегистрироваться</button>
+<body class="bg-gray-50">
+  <header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex flex-col gap-1">
+        <img src="logo.svg" alt="ShopTest" class="h-10" />
+        <h1 class="text-sm font-semibold text-gray-900">Кабинет тестировщика</h1>
       </div>
-      <button type="button" id="nav-profile" class="nav-profile-btn hidden">
-        <span class="nav-profile-label">Профиль</span>
-        <span class="nav-profile-status" id="auth-status">Не авторизован</span>
-      </button>
+      <div class="nav-actions">
+        <div class="nav-auth-group" id="nav-auth-group">
+          <button type="button" id="nav-show-login">Войти</button>
+          <button type="button" id="nav-show-register">Зарегистрироваться</button>
+        </div>
+        <button type="button" id="nav-profile" class="nav-profile-btn hidden">
+          <span class="nav-profile-label">Профиль</span>
+          <span class="nav-profile-status" id="auth-status">Не авторизован</span>
+        </button>
+      </div>
     </div>
   </header>
 
-  <main>
+  <main class="max-w-7xl mx-auto px-4 py-8">
     <section id="registration-section">
-      <h2>Регистрация</h2>
-      <form id="registration-form">
-        <label>
-          Телефон:
-          <input type="tel" name="phone_number" placeholder="+7..." required>
-        </label>
-        <label>
-          Имя:
-          <input type="text" name="first_name">
-        </label>
-        <label>
-          Фамилия:
-          <input type="text" name="last_name">
-        </label>
-        <label>
-          Email:
-          <input type="email" name="email">
-        </label>
-        <label>
-          Пароль:
-          <input type="password" name="password" required minlength="8">
-        </label>
-        <button type="submit">Зарегистрироваться</button>
-      </form>
+      <div class="max-w-md mx-auto bg-white rounded-lg shadow p-6">
+        <h2 class="text-2xl font-bold mb-6">Регистрация</h2>
+        <form id="registration-form">
+          <label>
+            Телефон:
+            <input type="tel" name="phone_number" placeholder="+7..." required>
+          </label>
+          <label>
+            Имя:
+            <input type="text" name="first_name">
+          </label>
+          <label>
+            Фамилия:
+            <input type="text" name="last_name">
+          </label>
+          <label>
+            Email:
+            <input type="email" name="email">
+          </label>
+          <label>
+            Пароль:
+            <input type="password" name="password" required minlength="8">
+          </label>
+          <button type="submit">Зарегистрироваться</button>
+        </form>
+      </div>
     </section>
 
     <section id="login-section" class="hidden">
-      <h2>Вход</h2>
-      <form id="login-form">
-        <label>
-          Телефон:
-          <input type="tel" name="phone_number" placeholder="+7..." required>
-        </label>
-        <label>
-          Пароль:
-          <input type="password" name="password" required>
-        </label>
-        <button type="submit">Войти</button>
-      </form>
+      <div class="max-w-md mx-auto bg-white rounded-lg shadow p-6">
+        <h2 class="text-2xl font-bold mb-6">Вход</h2>
+        <form id="login-form">
+          <label>
+            Телефон:
+            <input type="tel" name="phone_number" placeholder="+7..." required>
+          </label>
+          <label>
+            Пароль:
+            <input type="password" name="password" required>
+          </label>
+          <button type="submit">Войти</button>
+        </form>
+      </div>
     </section>
 
     <section id="profile-section" class="hidden">
@@ -74,7 +85,7 @@
         </div>
       </div>
       
-      <form id="profile-form" class="multi-step-form" novalidate>
+      <form id="profile-form" class="multi-step-form bg-white rounded-lg shadow p-6" novalidate>
         <!-- Шаг 1: Базовая информация -->
         <div class="form-step" data-step="1">
           <label>ФИО или псевдоним блогера *:
@@ -347,8 +358,8 @@
               </label>
             </div>
           </label>
-          <label>Есть ли у тебя медиа-кит? *:
-            <select name="has_media_kit" required onchange="toggleMediaKitLink(this)">
+          <label>Есть ли у тебя медиа-кит?:
+            <select name="has_media_kit" onchange="toggleMediaKitLink(this)">
               <option value="">Выберите...</option>
               <option value="true">Да</option>
               <option value="false">Нет</option>
@@ -398,25 +409,179 @@
         </div>
       </form>
       
-      <div class="profile-meta">
+      <div class="profile-meta bg-white rounded-lg shadow p-6 mt-6">
         <span id="profile-status"></span>
         <button id="participation-toggle" data-active="false">Участвовать в заказах</button>
       </div>
     </section>
 
     <section id="orders-section" class="hidden">
-      <h2>Заказы для подтверждения</h2>
-      <ul id="orders-list"></ul>
+      <div class="bg-white rounded-lg shadow p-6">
+        <h2>Заказы для подтверждения</h2>
+        <ul id="orders-list"></ul>
+      </div>
     </section>
 
     <section id="purchases-section" class="hidden">
-      <h2>Мои заказы</h2>
-      <ul id="purchases-list"></ul>
+      <div class="bg-white rounded-lg shadow p-6">
+        <h2>Мои заказы</h2>
+        <ul id="purchases-list"></ul>
+      </div>
+    </section>
+
+    <section id="test-report-section" class="hidden">
+      <div class="report-header">
+        <h2>Отчёт о тестировании</h2>
+        <button type="button" id="close-report-btn" class="close-btn">✕</button>
+      </div>
+      <form id="test-report-form" novalidate>
+        <input type="hidden" name="purchase_id" id="report-purchase-id">
+        
+        <!-- 1) Идентификация задания -->
+        <fieldset>
+          <legend>1) Идентификация задания</legend>
+          <label>ФИО *:
+            <input type="text" name="full_name" required>
+          </label>
+          <label>Телефон/Telegram *:
+            <input type="text" name="contact" required>
+          </label>
+          <label>Название товара/кейса *:
+            <input type="text" name="item_name" required>
+          </label>
+          <label>Категория *:
+            <select name="category" required>
+              <option value="">Выберите...</option>
+              <option value="cosmetics">Косметика</option>
+              <option value="clothing">Одежда</option>
+              <option value="tech">Техника</option>
+              <option value="home">Дом</option>
+              <option value="other">Другое</option>
+            </select>
+          </label>
+          <label>Дата получения *:
+            <input type="date" name="received_at" required>
+          </label>
+          <label>Дата завершения *:
+            <input type="date" name="completed_at" required>
+          </label>
+        </fieldset>
+
+        <!-- 2) Подтверждение выполнения -->
+        <fieldset>
+          <legend>2) Подтверждение выполнения</legend>
+          <label>Тип отчёта:
+            <select name="report_type">
+              <option value="">Выберите...</option>
+              <option value="publication">Публикация</option>
+              <option value="marketplace_review">Отзыв на МП</option>
+              <option value="photo_report">Фото-отчёт</option>
+              <option value="video_report">Видео-отчёт</option>
+              <option value="other">Другое</option>
+            </select>
+          </label>
+          <label>Ссылки на материалы:
+            <div id="proof-links-container">
+              <input type="url" name="proof_links[]" placeholder="https://...">
+            </div>
+            <button type="button" class="add-more-btn" onclick="addProofLink()">+ Добавить еще</button>
+          </label>
+          <label>Загрузка файлов (фото/видео/скрины, до 5):
+            <input type="file" name="proof_files" multiple accept="image/*,video/*" id="proof-files-input">
+            <div id="proof-files-list"></div>
+          </label>
+        </fieldset>
+
+        <!-- 3) Количественные оценки -->
+        <fieldset>
+          <legend>3) Количественные оценки (универсальные шкалы 1–5)</legend>
+          <label>Общее впечатление (1-5):
+            <input type="number" name="score_overall" min="1" max="5">
+          </label>
+          <label>Соответствие ожиданиям/описанию (1-5):
+            <input type="number" name="score_expectation_fit" min="1" max="5">
+          </label>
+          <label>Качество/эффективность (1-5):
+            <input type="number" name="score_quality_effect" min="1" max="5">
+          </label>
+          <label>Удобство использования/применения (1-5):
+            <input type="number" name="score_usability" min="1" max="5">
+          </label>
+          <label>Соотношение цена/качество (1-5):
+            <input type="number" name="score_value_for_money" min="1" max="5">
+          </label>
+          <label>Готовность рекомендовать (NPS-лайт, 0-10):
+            <input type="number" name="score_recommend" min="0" max="10">
+          </label>
+        </fieldset>
+
+        <!-- 4) Качественная обратная связь -->
+        <fieldset>
+          <legend>4) Качественная обратная связь</legend>
+          <label>Что понравилось?:
+            <textarea name="likes" rows="3"></textarea>
+          </label>
+          <label>Что улучшить?:
+            <textarea name="improvements" rows="3"></textarea>
+          </label>
+          <label>Комментарий/отзыв (до 1000 симв.):
+            <textarea name="review_text" rows="5" maxlength="1000"></textarea>
+            <small id="review-text-count">0/1000</small>
+          </label>
+          <label>3 слова-эмоции о товаре:
+            <input type="text" name="emotions_3_words" placeholder="например: радость, восторг, удивление">
+          </label>
+        </fieldset>
+
+        <!-- 5) Условия и итоги -->
+        <fieldset>
+          <legend>5) Условия и итоги</legend>
+          <label class="checkbox">
+            <input type="checkbox" name="issues_occured">
+            <span>Опыт проблем/дефектов</span>
+          </label>
+          <label id="issues-note-label" class="hidden">Описание проблем:
+            <textarea name="issues_note" rows="3"></textarea>
+          </label>
+          <label>Купили бы сами?:
+            <select name="would_buy">
+              <option value="">Выберите...</option>
+              <option value="yes">Да</option>
+              <option value="no">Нет</option>
+              <option value="depends_on_price">Зависит от цены</option>
+            </select>
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" name="ready_for_next">
+            <span>Готовность к повторному тесту</span>
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" name="consent_truthful" required>
+            <span>Подтверждаю достоверность данных *</span>
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" name="consent_use_materials" required>
+            <span>Разрешаю использовать материалы в отчётности/на сайте *</span>
+          </label>
+        </fieldset>
+
+        <div class="form-navigation">
+          <button type="submit" class="btn-primary">Сохранить отчёт</button>
+        </div>
+      </form>
     </section>
   </main>
 
+  <footer class="bg-white border-t border-gray-200 mt-12 py-6">
+    <div class="max-w-7xl mx-auto px-4 text-center text-gray-600 text-sm">
+      © 2024 Кабинет тестировщика. Все права защищены.
+    </div>
+  </footer>
+
   <div id="toast" class="hidden"></div>
 
+  <!-- Flowbite JS -->
+  <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

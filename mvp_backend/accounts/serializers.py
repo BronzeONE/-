@@ -186,13 +186,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 # Шаг 6
                 bool(instance.ready_for_brand_projects and instance.ready_for_brand_projects.strip()),
                 bool(instance.blog_management and instance.blog_management.strip()),
-                instance.has_media_kit is not None,
+                # has_media_kit теперь опциональное поле (может быть NULL)
                 bool(instance.ready_for_blogger_community and instance.ready_for_blogger_community.strip()),
                 instance.consent_privacy,
             ]
 
             # Если has_media_kit = True, то media_kit_link обязателен
-            if instance.has_media_kit and not (instance.media_kit_link and instance.media_kit_link.strip()):
+            if instance.has_media_kit is True and not (instance.media_kit_link and instance.media_kit_link.strip()):
                 required_fields.append(False)
 
             is_completed = all(required_fields)
